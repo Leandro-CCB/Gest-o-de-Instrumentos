@@ -299,6 +299,35 @@ tbody td{padding:8px 10px;font-size:12.5px;color:var(--text);vertical-align:midd
 
 @media print{.sidebar,.topbar,.filters,.modal,.toast-wrap,.btn{display:none!important}.main{margin-left:0!important}.content{padding:0!important}body{background:#fff!important}}
 
+/* ── LOGIN SCREEN ── */
+#login-screen{position:fixed;inset:0;background:linear-gradient(135deg,var(--navy) 0%,#0e2240 60%,#1a3557 100%);display:flex;align-items:center;justify-content:center;z-index:10000;font-family:'Source Sans 3',sans-serif}
+#login-screen.hidden{display:none}
+.login-box{background:var(--white);border-radius:16px;box-shadow:0 24px 64px rgba(0,0,0,.35);width:380px;max-width:94vw;overflow:hidden}
+.login-header{background:var(--navy);padding:28px 28px 22px;text-align:center}
+.login-header .brand{font-family:'Playfair Display',serif;font-size:22px;color:#fff;margin-bottom:3px}
+.login-header .sub{font-size:11px;color:rgba(255,255,255,.45);letter-spacing:.1em;text-transform:uppercase}
+.login-body{padding:28px}
+.login-body .fg{margin-bottom:16px}
+.login-body .fg-lbl{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:5px;display:block}
+.login-body .fi{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:9px 12px;font-family:'Source Sans 3',sans-serif;font-size:14px;color:var(--text);outline:none;transition:border-color .14s}
+.login-body .fi:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(28,53,87,.1)}
+.login-btn{width:100%;background:var(--navy);color:#fff;border:none;border-radius:7px;padding:11px;font-family:'Source Sans 3',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:background .14s;margin-top:4px}
+.login-btn:hover{background:var(--navy2)}
+.login-error{background:var(--red-bg);color:var(--red);border:1px solid #f0aaaa;border-radius:7px;padding:8px 12px;font-size:12.5px;margin-bottom:14px;display:none}
+.login-error.show{display:block}
+.login-footer{text-align:center;font-size:10px;color:var(--muted);padding:0 28px 20px}
+
+/* ── CONFIG USUÁRIOS ── */
+.user-list{display:flex;flex-direction:column;gap:9px;margin-bottom:18px}
+.user-card{background:var(--white);border:1px solid var(--border);border-radius:9px;padding:12px 16px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow)}
+.user-avatar{width:38px;height:38px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:17px;font-weight:700;flex-shrink:0}
+.user-info{flex:1}
+.user-name{font-weight:700;font-size:13px}
+.user-role{font-size:11px;color:var(--muted);margin-top:1px}
+.role-badge{display:inline-flex;padding:2px 8px;border-radius:20px;font-size:9.5px;font-weight:700;border:1px solid transparent}
+.role-admin{background:var(--navy-light);color:var(--navy);border-color:#afc3e8}
+.role-user{background:var(--green-bg);color:var(--green);border-color:#b0d9c2}
+
 /* ── MANUTENÇÃO ── */
 .man-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:18px}
 .man-item{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:12px 15px;display:flex;align-items:flex-start;gap:11px;box-shadow:var(--shadow);transition:border-color .14s}
@@ -340,6 +369,29 @@ tbody td{padding:8px 10px;font-size:12.5px;color:var(--text);vertical-align:midd
 </head>
 <body>
 
+<!-- LOGIN SCREEN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-header">
+      <div class="brand">♪ CCB Orquestra</div>
+      <div class="sub">Gestão de Instrumentos Musicais</div>
+    </div>
+    <div class="login-body">
+      <div class="login-error" id="login-error">Usuário ou senha incorretos.</div>
+      <div class="fg">
+        <label class="fg-lbl">Usuário</label>
+        <input class="fi" id="login-user" type="text" placeholder="Digite seu usuário" autocomplete="username" onkeydown="if(event.key==='Enter')document.getElementById('login-pass').focus()">
+      </div>
+      <div class="fg">
+        <label class="fg-lbl">Senha</label>
+        <input class="fi" id="login-pass" type="password" placeholder="Digite sua senha" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <button class="login-btn" onclick="doLogin()">Entrar</button>
+    </div>
+    <div class="login-footer">CCB Gestão v3.1 · Desenvolvido por Leandro Machado</div>
+  </div>
+</div>
+
 <!-- Loading -->
 <div id="loading-screen">
   <div class="spinner"></div>
@@ -376,10 +428,17 @@ tbody td{padding:8px 10px;font-size:12.5px;color:var(--text);vertical-align:midd
     <div class="sb-item" onclick="nav('manutencao',this)"><span class="ic">🔧</span>Histórico Reparos<span class="sb-badge" id="b-man2">0</span></div>
     <div class="sb-item" onclick="nav('manutencao',this);setTimeout(()=>{document.getElementById('fman-status').value='Concluído';renderMAN()},50)"><span class="ic">✔</span>Concluídos<span class="sb-badge" id="b-manconc">0</span></div>
     <div class="sb-item" onclick="nav('estoque',this)"><span class="ic">📦</span>Estoque<span class="sb-badge" id="b-est">0</span></div>
+    <div class="sb-section">Sistema</div>
+    <div class="sb-item" onclick="nav('configuracoes',this)"><span class="ic">⚙</span>Configurações</div>
+    <div class="sb-item" onclick="doLogout()" style="margin-top:4px"><span class="ic">⎋</span>Sair</div>
   </nav>
   <div class="sb-foot" style="padding:10px 14px;text-align:center">
   <div style="color:rgba(255,255,255,.28);font-size:9.5px;margin-bottom:8px">v3.1 Firebase · CCB Gestão · 2025</div>
-  <div style="color:rgba(255,255,255,.18);font-size:8.5px;margin-bottom:10px">Desenvolvido por<br><span style="color:rgba(255,255,255,.45);font-weight:600">Leandro Machado</span></div>
+  <div style="color:rgba(255,255,255,.18);font-size:8.5px;margin-bottom:6px">Desenvolvido por<br><span style="color:rgba(255,255,255,.45);font-weight:600">Leandro Machado</span></div>
+  <div id="sb-user-info" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:7px;padding:6px 10px;margin-bottom:8px;text-align:left;display:none">
+    <div style="font-size:9px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.08em;margin-bottom:2px">Logado como</div>
+    <div style="font-size:12px;color:rgba(255,255,255,.85);font-weight:600" id="sb-user-name">—</div>
+  </div>
   <div style="display:flex;flex-direction:column;gap:5px">
     <button onclick="expBackup()" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.8);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:11px;font-family:inherit;font-weight:600;transition:all .14s;display:flex;align-items:center;justify-content:center;gap:5px" onmouseover="this.style.background='rgba(255,255,255,.18)'" onmouseout="this.style.background='rgba(255,255,255,.1)'">⬇ Exportar Backup</button>
     <label style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.6);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:5px;transition:all .14s" onmouseover="this.style.background='rgba(255,255,255,.14)'" onmouseout="this.style.background='rgba(255,255,255,.07)'">⬆ Importar Backup<input type="file" accept=".json" style="display:none" onchange="impBackup(event)"></label>
@@ -521,6 +580,28 @@ tbody td{padding:8px 10px;font-size:12.5px;color:var(--text);vertical-align:midd
         </div>
       </div>
       <div class="est-grid" id="est-grid"></div>
+    </div>
+
+    <!-- CONFIGURAÇÕES -->
+    <div class="page" id="page-configuracoes">
+      <div class="sec-title">Configurações do Sistema
+        <button class="btn btn-primary" onclick="openAddUser()">＋ Novo Usuário</button>
+      </div>
+
+      <!-- Info do usuário logado -->
+      <div style="background:var(--navy-light);border:1px solid #afc3e8;border-radius:10px;padding:14px 18px;margin-bottom:18px;display:flex;align-items:center;gap:12px">
+        <div style="width:42px;height:42px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:19px;font-weight:700;flex-shrink:0" id="conf-avatar">?</div>
+        <div>
+          <div style="font-weight:700;font-size:13px" id="conf-logged-name">—</div>
+          <div style="font-size:11px;color:var(--muted)" id="conf-logged-role">—</div>
+        </div>
+        <div style="margin-left:auto">
+          <button class="btn btn-sm" onclick="openChangePass()">🔑 Alterar Minha Senha</button>
+        </div>
+      </div>
+
+      <div class="sec-title" style="font-size:14px;margin-top:4px">Usuários Cadastrados</div>
+      <div class="user-list" id="user-list"></div>
     </div>
 
   </div>
@@ -670,6 +751,43 @@ tbody td{padding:8px 10px;font-size:12.5px;color:var(--text);vertical-align:midd
       </div>
     </div>
     <div class="m-footer"><button class="btn" onclick="closeEST()">Cancelar</button><button class="btn btn-primary" onclick="saveEST()">💾 Salvar Item</button></div>
+  </div>
+</div>
+
+<!-- MODAL ADD/EDIT USER -->
+<div class="overlay" id="ov-user" onclick="if(event.target===this)closeAddUser()">
+  <div class="modal modal-w460">
+    <div class="m-head"><div class="m-icon">👤</div><div><div class="m-title" id="user-modal-title">Novo Usuário</div><div class="m-sub">Cadastro de acesso ao sistema</div></div><button class="m-close" onclick="closeAddUser()">✕</button></div>
+    <div class="m-body">
+      <div class="fgrid">
+        <div class="fg full"><label class="fg-lbl">Nome Completo *</label><input class="fi" id="u-nome" type="text" placeholder="Ex: João da Silva"></div>
+        <div class="fg full"><label class="fg-lbl">Usuário (login) *</label><input class="fi" id="u-user" type="text" placeholder="Ex: joao.silva" autocomplete="off"></div>
+        <div class="fg"><label class="fg-lbl">Perfil</label>
+          <select class="fs" id="u-role">
+            <option value="usuario">Usuário</option>
+            <option value="admin">Administrador</option>
+          </select>
+        </div>
+        <div class="fg" id="u-pass-group"><label class="fg-lbl">Senha *</label><input class="fi" id="u-pass" type="password" placeholder="Mínimo 4 caracteres" autocomplete="new-password"></div>
+        <div class="fg full" id="u-pass2-group"><label class="fg-lbl">Confirmar Senha *</label><input class="fi" id="u-pass2" type="password" placeholder="Repita a senha" autocomplete="new-password"></div>
+      </div>
+    </div>
+    <div class="m-footer"><button class="btn" onclick="closeAddUser()">Cancelar</button><button class="btn btn-primary" id="u-save-btn" onclick="saveUser()">💾 Salvar Usuário</button></div>
+  </div>
+</div>
+
+<!-- MODAL ALTERAR SENHA -->
+<div class="overlay" id="ov-chpass" onclick="if(event.target===this)closeChangePass()">
+  <div class="modal modal-w460">
+    <div class="m-head"><div class="m-icon">🔑</div><div><div class="m-title">Alterar Senha</div><div class="m-sub">Defina sua nova senha de acesso</div></div><button class="m-close" onclick="closeChangePass()">✕</button></div>
+    <div class="m-body">
+      <div class="fgrid">
+        <div class="fg full"><label class="fg-lbl">Senha Atual *</label><input class="fi" id="cp-atual" type="password" placeholder="Senha atual" autocomplete="current-password"></div>
+        <div class="fg full"><label class="fg-lbl">Nova Senha *</label><input class="fi" id="cp-nova" type="password" placeholder="Mínimo 4 caracteres" autocomplete="new-password"></div>
+        <div class="fg full"><label class="fg-lbl">Confirmar Nova Senha *</label><input class="fi" id="cp-nova2" type="password" placeholder="Repita a nova senha" autocomplete="new-password"></div>
+      </div>
+    </div>
+    <div class="m-footer"><button class="btn" onclick="closeChangePass()">Cancelar</button><button class="btn btn-primary" onclick="saveChangePass()">🔑 Alterar Senha</button></div>
   </div>
 </div>
 
@@ -866,6 +984,15 @@ async function init(){
   // Esconde loading
   document.getElementById('loading-screen').style.display='none';
 
+  // Mostra usuário logado na sidebar
+  const sess = getSession();
+  if(sess){
+    const sbu = document.getElementById('sb-user-info');
+    const sbn = document.getElementById('sb-user-name');
+    if(sbu) sbu.style.display='block';
+    if(sbn) sbn.textContent = sess.nome;
+  }
+
   // Renderiza
   updStats();renderDash();fillFilters();
 }
@@ -903,7 +1030,7 @@ function nav(p,el){
   if(el)el.classList.add('active');
   const T={dashboard:'Dashboard',instrumentos:'Instrumentos',igrejas:'Igrejas / Locais',
     termos:'Termos de Doação',movimentacao:'Movimentação',seguro:'Inventário / Seguro',
-    manutencao:'Histórico de Manutenções',estoque:'Estoque de Acessórios'};
+    manutencao:'Histórico de Manutenções',estoque:'Estoque de Acessórios',configuracoes:'Configurações'};
   document.getElementById('page-title').textContent=T[p]||p;
   if(p==='dashboard')renderDash();
   if(p==='instrumentos'){fillFilters();renderTable();}
@@ -913,6 +1040,7 @@ function nav(p,el){
   if(p==='seguro')renderSeg();
   if(p==='manutencao')renderMAN();
   if(p==='estoque')renderEST();
+  if(p==='configuracoes')renderUsers();
 }
 
 // ══════════ STATS ══════════
@@ -1953,15 +2081,206 @@ function pdfRelatorioMAN(){
   toast('Relatório de serviços gerado!','inf');
 }
 
+// ══════════ AUTENTICAÇÃO ══════════
+const USERS_KEY = 'ccb_users';
+const SESSION_KEY = 'ccb_session';
+
+function getUsers() {
+  const raw = localStorage.getItem(USERS_KEY);
+  if (raw) return JSON.parse(raw);
+  // Usuário padrão inicial
+  const defaults = [{id:1, nome:'Administrador', username:'admin', password:'admin123', role:'admin'}];
+  localStorage.setItem(USERS_KEY, JSON.stringify(defaults));
+  return defaults;
+}
+function saveUsers(arr) { localStorage.setItem(USERS_KEY, JSON.stringify(arr)); }
+function getSession() { const s=sessionStorage.getItem(SESSION_KEY); return s?JSON.parse(s):null; }
+function setSession(u) { sessionStorage.setItem(SESSION_KEY,JSON.stringify(u)); }
+function clearSession() { sessionStorage.removeItem(SESSION_KEY); }
+
+function doLogin() {
+  const username = document.getElementById('login-user').value.trim();
+  const password = document.getElementById('login-pass').value;
+  const users = getUsers();
+  const found = users.find(u => u.username === username && u.password === password);
+  const err = document.getElementById('login-error');
+  if (!found) {
+    err.classList.add('show');
+    document.getElementById('login-pass').value='';
+    return;
+  }
+  err.classList.remove('show');
+  setSession({id:found.id, nome:found.nome, username:found.username, role:found.role});
+  document.getElementById('login-screen').classList.add('hidden');
+  init(); // inicia o sistema após login
+}
+
+function doLogout() {
+  clearSession();
+  document.getElementById('login-user').value='';
+  document.getElementById('login-pass').value='';
+  document.getElementById('login-screen').classList.remove('hidden');
+  // Reseta app para evitar estado sujo
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+  document.getElementById('page-dashboard').classList.add('active');
+  document.getElementById('loading-screen').style.display='flex';
+}
+
+// ══════════ GESTÃO DE USUÁRIOS ══════════
+let eUser = null; // usuário em edição
+
+function renderUsers() {
+  const users = getUsers();
+  const sess = getSession();
+  const list = document.getElementById('user-list');
+  if (!list) return;
+  // Atualiza info do logado
+  if (sess) {
+    const a = document.getElementById('conf-avatar');
+    const n = document.getElementById('conf-logged-name');
+    const r = document.getElementById('conf-logged-role');
+    if(a) a.textContent = sess.nome.charAt(0).toUpperCase();
+    if(n) n.textContent = sess.nome;
+    if(r) r.innerHTML = `<span class="role-badge ${sess.role==='admin'?'role-admin':'role-user'}">${sess.role==='admin'?'Administrador':'Usuário'}</span>`;
+  }
+  if (!users.length) { list.innerHTML='<div class="empty"><div class="ei">👤</div><div class="et">Nenhum usuário cadastrado</div></div>'; return; }
+  list.innerHTML = users.map(u => `
+    <div class="user-card">
+      <div class="user-avatar">${u.nome.charAt(0).toUpperCase()}</div>
+      <div class="user-info">
+        <div class="user-name">${u.nome}</div>
+        <div class="user-role"><span class="role-badge ${u.role==='admin'?'role-admin':'role-user'}">${u.role==='admin'?'Administrador':'Usuário'}</span> &nbsp;@${u.username}</div>
+      </div>
+      <div style="display:flex;gap:5px">
+        <button class="btn btn-sm" onclick="openEditUser(${u.id})">✏ Editar</button>
+        ${(sess && u.id !== sess.id) ? `<button class="btn btn-sm btn-danger" onclick="deleteUser(${u.id})">✕</button>` : ''}
+      </div>
+    </div>`).join('');
+}
+
+function openAddUser() {
+  eUser = null;
+  document.getElementById('user-modal-title').textContent = 'Novo Usuário';
+  document.getElementById('u-nome').value='';
+  document.getElementById('u-user').value='';
+  document.getElementById('u-pass').value='';
+  document.getElementById('u-pass2').value='';
+  document.getElementById('u-role').value='usuario';
+  document.getElementById('u-pass-group').style.display='';
+  document.getElementById('u-pass2-group').style.display='';
+  document.getElementById('u-save-btn').textContent='💾 Salvar Usuário';
+  document.getElementById('ov-user').classList.add('open');
+}
+
+function openEditUser(id) {
+  const users = getUsers();
+  const u = users.find(x=>x.id===id);
+  if(!u) return;
+  eUser = u;
+  document.getElementById('user-modal-title').textContent = 'Editar Usuário';
+  document.getElementById('u-nome').value = u.nome;
+  document.getElementById('u-user').value = u.username;
+  document.getElementById('u-pass').value='';
+  document.getElementById('u-pass2').value='';
+  document.getElementById('u-role').value = u.role;
+  document.getElementById('u-pass-group').style.display='';
+  document.getElementById('u-pass2-group').style.display='';
+  document.getElementById('u-save-btn').textContent='💾 Salvar Alterações';
+  document.getElementById('ov-user').classList.add('open');
+}
+
+function closeAddUser() { document.getElementById('ov-user').classList.remove('open'); }
+
+function saveUser() {
+  const nome = document.getElementById('u-nome').value.trim();
+  const username = document.getElementById('u-user').value.trim().toLowerCase();
+  const pass = document.getElementById('u-pass').value;
+  const pass2 = document.getElementById('u-pass2').value;
+  const role = document.getElementById('u-role').value;
+  if (!nome || !username) { toast('Preencha nome e usuário','err'); return; }
+  const users = getUsers();
+  if (eUser) {
+    // Editando
+    if (pass) {
+      if (pass.length < 4) { toast('Senha mínima: 4 caracteres','err'); return; }
+      if (pass !== pass2) { toast('Senhas não conferem','err'); return; }
+    }
+    const dup = users.find(u=>u.username===username && u.id!==eUser.id);
+    if (dup) { toast('Usuário já existe','err'); return; }
+    const idx = users.findIndex(u=>u.id===eUser.id);
+    users[idx] = {...users[idx], nome, username, role, ...(pass?{password:pass}:{})};
+    saveUsers(users);
+    toast('Usuário atualizado!','ok');
+  } else {
+    // Novo
+    if (!pass) { toast('Informe uma senha','err'); return; }
+    if (pass.length < 4) { toast('Senha mínima: 4 caracteres','err'); return; }
+    if (pass !== pass2) { toast('Senhas não conferem','err'); return; }
+    if (users.find(u=>u.username===username)) { toast('Usuário já existe','err'); return; }
+    const newId = Math.max(0,...users.map(u=>u.id))+1;
+    users.push({id:newId, nome, username, password:pass, role});
+    saveUsers(users);
+    toast('Usuário criado!','ok');
+  }
+  closeAddUser();
+  renderUsers();
+}
+
+function deleteUser(id) {
+  const sess = getSession();
+  if (sess && sess.id === id) { toast('Não é possível excluir o usuário logado','err'); return; }
+  confirm2('Excluir Usuário','Deseja excluir este usuário? Esta ação não pode ser desfeita.',()=>{
+    const users = getUsers().filter(u=>u.id!==id);
+    saveUsers(users);
+    renderUsers();
+    toast('Usuário removido','ok');
+  });
+}
+
+function openChangePass() {
+  document.getElementById('cp-atual').value='';
+  document.getElementById('cp-nova').value='';
+  document.getElementById('cp-nova2').value='';
+  document.getElementById('ov-chpass').classList.add('open');
+}
+function closeChangePass() { document.getElementById('ov-chpass').classList.remove('open'); }
+
+function saveChangePass() {
+  const atual = document.getElementById('cp-atual').value;
+  const nova = document.getElementById('cp-nova').value;
+  const nova2 = document.getElementById('cp-nova2').value;
+  const sess = getSession();
+  if (!sess) return;
+  const users = getUsers();
+  const u = users.find(x=>x.id===sess.id);
+  if (!u || u.password !== atual) { toast('Senha atual incorreta','err'); return; }
+  if (nova.length < 4) { toast('Nova senha: mínimo 4 caracteres','err'); return; }
+  if (nova !== nova2) { toast('Senhas não conferem','err'); return; }
+  u.password = nova;
+  saveUsers(users);
+  closeChangePass();
+  toast('Senha alterada com sucesso!','ok');
+}
+
 // ══════════ KEYBOARD ══════════
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){
-    ['ov-instr','ov-ig','ov-tr','ov-mv','ov-conf','ov-man','ov-est'].forEach(id=>document.getElementById(id).classList.remove('open'));
+    ['ov-instr','ov-ig','ov-tr','ov-mv','ov-conf','ov-man','ov-est','ov-user','ov-chpass'].forEach(id=>document.getElementById(id).classList.remove('open'));
   }
 });
 
 // ══════════ INICIAR ══════════
-init();
+// Verifica sessão ao carregar a página
+(function checkSession(){
+  const sess = getSession();
+  if(sess){
+    document.getElementById('login-screen').classList.add('hidden');
+    init();
+  } else {
+    // Mostra login, esconde loading
+    document.getElementById('loading-screen').style.display='none';
+  }
+})();
 </script>
 </body>
 </html>

@@ -2081,29 +2081,62 @@ function pdfRelatorioMAN(){
   toast('Relatório de serviços gerado!','inf');
 }
 
-// ══════════ AUTENTICAÇÃO ══════════
-const USERS_KEY = 'ccb_users';
+// ══════════ AUTENTICAÇÃO (Firestore) ══════════
 const SESSION_KEY = 'ccb_session';
 
+// Cache local de usuários (carregado do Firestore)
+let _usersCache = null;
+
+// Retorna usuários do cache (já carregados do Firestore)
 function getUsers() {
-  const raw = localStorage.getItem(USERS_KEY);
-  if (raw) return JSON.parse(raw);
-  // Usuário padrão inicial
-  const defaults = [{id:1, nome:'Administrador', username:'admin', password:'admin123', role:'admin'}];
-  localStorage.setItem(USERS_KEY, JSON.stringify(defaults));
-  return defaults;
+  return _usersCache || [];
 }
-function saveUsers(arr) { localStorage.setItem(USERS_KEY, JSON.stringify(arr)); }
+
+// Salva lista de usuários no Firestore
+async function saveUsers(arr) {
+  _usersCache = arr;
+  if (window._fb) {
+    await window._fb.saveCollection('ccb_users', arr.map(u => ({...u, id: String(u.id)})));
+  }
+}
+
+// Carrega usuários do Firestore; cria admin padrão se não existir nenhum
+async function loadUsersFromFirestore() {
+  if (!window._fb) return;
+  try {
+    const data = await window._fb.loadCollection('ccb_users');
+    if (data && data.length > 0) {
+      // Normaliza id de volta para número
+      _usersCache = data.map(u => ({...u, id: Number(u.id)}));
+    } else {
+      // Primeiro acesso: cria usuário admin padrão
+      const defaults = [{id:1, nome:'Administrador', username:'admin', password:'admin123', role:'admin'}];
+      _usersCache = defaults;
+      await window._fb.saveCollection('ccb_users', defaults.map(u => ({...u, id: String(u.id)})));
+      console.log('Usuário admin padrão criado no Firestore.');
+    }
+  } catch(e) {
+    console.warn('Erro ao carregar usuários do Firestore:', e);
+    _usersCache = [];
+  }
+}
+
 function getSession() { const s=sessionStorage.getItem(SESSION_KEY); return s?JSON.parse(s):null; }
 function setSession(u) { sessionStorage.setItem(SESSION_KEY,JSON.stringify(u)); }
 function clearSession() { sessionStorage.removeItem(SESSION_KEY); }
 
-function doLogin() {
+async function doLogin() {
   const username = document.getElementById('login-user').value.trim();
   const password = document.getElementById('login-pass').value;
+  const err = document.getElementById('login-error');
+
+  // Garante que os usuários estão carregados antes de tentar login
+  if (!_usersCache) {
+    await loadUsersFromFirestore();
+  }
+
   const users = getUsers();
   const found = users.find(u => u.username === username && u.password === password);
-  const err = document.getElementById('login-error');
   if (!found) {
     err.classList.add('show');
     document.getElementById('login-pass').value='';
@@ -2191,7 +2224,7 @@ function openEditUser(id) {
 
 function closeAddUser() { document.getElementById('ov-user').classList.remove('open'); }
 
-function saveUser() {
+async function saveUser() {
   const nome = document.getElementById('u-nome').value.trim();
   const username = document.getElementById('u-user').value.trim().toLowerCase();
   const pass = document.getElementById('u-pass').value;
@@ -2209,7 +2242,7 @@ function saveUser() {
     if (dup) { toast('Usuário já existe','err'); return; }
     const idx = users.findIndex(u=>u.id===eUser.id);
     users[idx] = {...users[idx], nome, username, role, ...(pass?{password:pass}:{})};
-    saveUsers(users);
+    await saveUsers(users);
     toast('Usuário atualizado!','ok');
   } else {
     // Novo
@@ -2219,7 +2252,7 @@ function saveUser() {
     if (users.find(u=>u.username===username)) { toast('Usuário já existe','err'); return; }
     const newId = Math.max(0,...users.map(u=>u.id))+1;
     users.push({id:newId, nome, username, password:pass, role});
-    saveUsers(users);
+    await saveUsers(users);
     toast('Usuário criado!','ok');
   }
   closeAddUser();
@@ -2229,9 +2262,9 @@ function saveUser() {
 function deleteUser(id) {
   const sess = getSession();
   if (sess && sess.id === id) { toast('Não é possível excluir o usuário logado','err'); return; }
-  confirm2('Excluir Usuário','Deseja excluir este usuário? Esta ação não pode ser desfeita.',()=>{
+  confirm2('Excluir Usuário','Deseja excluir este usuário? Esta ação não pode ser desfeita.',async ()=>{
     const users = getUsers().filter(u=>u.id!==id);
-    saveUsers(users);
+    await saveUsers(users);
     renderUsers();
     toast('Usuário removido','ok');
   });
@@ -2245,7 +2278,7 @@ function openChangePass() {
 }
 function closeChangePass() { document.getElementById('ov-chpass').classList.remove('open'); }
 
-function saveChangePass() {
+async function saveChangePass() {
   const atual = document.getElementById('cp-atual').value;
   const nova = document.getElementById('cp-nova').value;
   const nova2 = document.getElementById('cp-nova2').value;
@@ -2257,7 +2290,7 @@ function saveChangePass() {
   if (nova.length < 4) { toast('Nova senha: mínimo 4 caracteres','err'); return; }
   if (nova !== nova2) { toast('Senhas não conferem','err'); return; }
   u.password = nova;
-  saveUsers(users);
+  await saveUsers(users);
   closeChangePass();
   toast('Senha alterada com sucesso!','ok');
 }
@@ -2270,15 +2303,34 @@ document.addEventListener('keydown',e=>{
 });
 
 // ══════════ INICIAR ══════════
-// Verifica sessão ao carregar a página
+// Verifica sessão ao carregar a página — aguarda Firebase e carrega usuários da nuvem
 (function checkSession(){
-  const sess = getSession();
-  if(sess){
-    document.getElementById('login-screen').classList.add('hidden');
-    init();
+  async function start() {
+    // Carrega usuários do Firestore antes de qualquer coisa
+    await loadUsersFromFirestore();
+    const sess = getSession();
+    if(sess){
+      document.getElementById('login-screen').classList.add('hidden');
+      init();
+    } else {
+      // Mostra login, esconde loading
+      document.getElementById('loading-screen').style.display='none';
+    }
+  }
+
+  // Aguarda o Firebase estar pronto (evento disparado no módulo ES)
+  if (window._fb) {
+    start();
   } else {
-    // Mostra login, esconde loading
-    document.getElementById('loading-screen').style.display='none';
+    window.addEventListener('firebaseReady', start, { once: true });
+    // Fallback: se Firebase demorar, mostra o login mesmo assim após 5s
+    setTimeout(() => {
+      if (!_usersCache) {
+        console.warn('Firebase demorou — exibindo tela de login sem dados da nuvem.');
+        _usersCache = [];
+        document.getElementById('loading-screen').style.display='none';
+      }
+    }, 5000);
   }
 })();
 </script>
